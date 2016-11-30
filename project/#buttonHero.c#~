@@ -27,7 +27,15 @@ AbRArrow rightArrow = {abRArrowGetBounds, abRArrowCheck, 30};
 int score = 0;
 
 char getChar(int number){
-  return (char)(number + 48);
+  return (char)(score + 48)
+}
+
+void displayScore(){
+  char buffer[3];
+  buffer[2] = getChar(score%10);
+  buffer[1] = getChar((score % 100) - (score % 10));
+  buffer[0] = getChar(score - (score %100) - (score%10));
+  drawString5x7(20, 2, buffer, COLOR_WHITE, COLOR_BLUE);
 }
 
 AbRectOutline fieldOutline = {	/* playing field */
@@ -60,14 +68,6 @@ Layer fieldLayer = {		/* playing field as a layer */
   &ball
 };
 
-void displayScore(){
-  char buffer[3];
-  buffer[2] = (char)((score % 10) + 48);
-  buffer[1] = '0';
-  buffer[0] = '0';
-  drawString5x7(20, 2, buffer, COLOR_WHITE, COLOR_BLUE);
-}
-
 /** Moving Layer
  *  Linked list of layer references
  *  Velocity represents one iteration of change (direction & magnitude)
@@ -87,7 +87,6 @@ MovLayer ml0 = {&ball, {3, 1}, &ml1};
 
 movLayerDraw(MovLayer *movLayers, Layer *layers)
 {
-  displayScore();
   int row, col;
   MovLayer *movLayer;
 
@@ -140,26 +139,31 @@ void mlAdvance(MovLayer *ml, Region *fence)
    for (; ml; ml = ml->next) {
     vec2Add(&newPos, &ml->layer->posNext, &ml->velocity);
     abShapeGetBounds(ml->layer->abShape, &newPos, &shapeBoundary);
-    for (axis = 0; axis < 2; axis ++) { 
+    for (axis = 0; axis < 2; axis ++) {
+      if(shapeBoundary.topLeft.axes[1] <= fence->topLeft.axes[1]){
+	score++;
+      }
+      
       if ((shapeBoundary.topLeft.axes[axis] < fence->topLeft.axes[axis]) ||
 	  (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
 	int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
 	newPos.axes[axis] += (2*velocity);
 
-	if(shapeBoundary.topLeft.axes[1] >= screenHeight + 20)
-	  score++;
       }	/**< if outside of fence */
 
       //Code to bounce the ball from the pong
-      if(shapeBoundary.botRight.axes[1] > pong.pos.axes[1] - 5 &&
-	 shapeBoundary.botRight.axes[1] < pong.pos.axes[1] + 5 &&
-	 (shapeBoundary.botRight.axes[0] < pong.pos.axes[0] + 10 &&
-	  shapeBoundary.botRight.axes[0] > pong.pos.axes[0] - 10)){
-	 if(ml->velocity.axes[1] > 0){
+      if((shapeBoundary.topLeft.axes[1]  > pong.pos.axes[1]-5 ||
+	  shapeBoundary.botRight.axes[1] > pong.pos.axes[1]-5 ) &&
+	 (shapeBoundary.botRight.axes[0]  >= pong.pos.axes[0] ||
+	  shapeBoundary.botRight.axes[0] <= pong.pos.axes[0] )){
+	if(ml->velocity.axes[1] > 0){
 	  int velocity = ml->velocity.axes[1] = -ml->velocity.axes[1];
 	  newPos.axes[1] += (2*velocity);
 	}
-      }   
+      }
+      if(shapeBoundary.topLeft.axes[1] < fence->topLeft.axes[1]){
+	score++;
+      }
     } /**< for axis */
     ml->layer->posNext = newPos;
    } /**< for ml */
@@ -206,6 +210,7 @@ void main()
     P1OUT |= GREEN_LED;       /**< Green led on when CPU on */
     //redrawScreen = 0;
     movLayerDraw(&ml0, &fieldLayer);
+    displayScore();
   }
 }
 
