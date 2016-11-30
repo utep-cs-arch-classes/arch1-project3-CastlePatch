@@ -62,9 +62,17 @@ Layer fieldLayer = {		/* playing field as a layer */
 
 void displayScore(){
   char buffer[3];
-  buffer[2] = (char)((score % 10) + 48);
-  buffer[1] = '0';
-  buffer[0] = '0';
+  buffer[2] = '0' + (score % 10);
+  if(score >= 10)
+    buffer[1] = '0' + ((score % 100) - (score % 10));
+  else
+    buffer[1] = getChar(0);
+
+  if(score >= 100)
+    buffer[0] = getChar(score - (score %100) - (score %10));
+  else
+    buffer[0] = getChar(0);
+  
   drawString5x7(20, 2, buffer, COLOR_WHITE, COLOR_BLUE);
 }
 
@@ -145,11 +153,15 @@ void mlAdvance(MovLayer *ml, Region *fence)
 	  (shapeBoundary.botRight.axes[axis] > fence->botRight.axes[axis]) ) {
 	int velocity = ml->velocity.axes[axis] = -ml->velocity.axes[axis];
 	newPos.axes[axis] += (2*velocity);
-
-	if(shapeBoundary.topLeft.axes[1] >= screenHeight + 20)
-	  score++;
       }	/**< if outside of fence */
 
+
+      if(shapeBoundary.topLeft.axes[1] < fence->topLeft.axes[1]){
+	score++;
+      }
+      else if(shapeBoundary.botRight.axes[1] > fence->botRight.axes[1]){
+	score = 0;
+      }
       //Code to bounce the ball from the pong
       if(shapeBoundary.botRight.axes[1] > pong.pos.axes[1] - 5 &&
 	 shapeBoundary.botRight.axes[1] < pong.pos.axes[1] + 5 &&
