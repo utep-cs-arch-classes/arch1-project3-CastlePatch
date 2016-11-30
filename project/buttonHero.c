@@ -27,7 +27,7 @@ AbRArrow rightArrow = {abRArrowGetBounds, abRArrowCheck, 30};
 int score = 0;
 
 char getChar(int number){
-  return (char)(number + 48);
+  return '0' + (char)(number);
 }
 
 AbRectOutline fieldOutline = {	/* playing field */
@@ -35,7 +35,7 @@ AbRectOutline fieldOutline = {	/* playing field */
   {screenWidth/2 - 10, screenHeight/2 - 10}
 };
 
-Layer pong = {
+Layer pong = { // Layer with stick to bounce ball
   (AbShape *) &rect2x10,
   {(screenWidth/2), (screenHeight/2) + 60},
   {0,0}, {0,0},
@@ -60,16 +60,18 @@ Layer fieldLayer = {		/* playing field as a layer */
   &ball
 };
 
+//Displays the score of the game in the top left corner
 void displayScore(){
   char buffer[3];
-  buffer[2] = '0' + (score % 10);
-  if(score >= 10)
-    buffer[1] = '0' + ((score % 100) - (score % 10));
+  buffer[2] = getChar(score%10); //first digit
+
+  if(score >= 10) //second digit
+    buffer[1] = getChar(((score % 100) - (score % 10))/10);
   else
     buffer[1] = getChar(0);
 
-  if(score >= 100)
-    buffer[0] = getChar(score - (score %100) - (score %10));
+  if(score >= 100) //third digit
+    buffer[0] = getChar((score - (score %100) - (score %10))/100);
   else
     buffer[0] = getChar(0);
   
@@ -87,9 +89,6 @@ typedef struct MovLayer_s {
 } MovLayer;
 
 /* initial value of {0,0} will be overwritten */
-//MovLayer ml3 = { &layer3, {1,1}, 0 }; /**< not all layers move */
-//MovLayer ml1 = { &layer1, {1,2}, &ml3 }; 
-//MovLayer ml0 = { &layer0, {2,1}, &ml1 }; 
 MovLayer ml1 = {&pong, {2, 0}, 0};
 MovLayer ml0 = {&ball, {3, 1}, &ml1};
 
